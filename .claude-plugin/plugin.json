@@ -1,0 +1,10 @@
+{
+  "name": "progress-bar",
+  "version": "0.1.0",
+  "description": "Progress bars above the Claude Code prompt for long tasks: file downloads tracked by size, scripts by step counter, read from ~/.claude/progress/*.json",
+  "types": "./types/index.d.ts",
+  "license": "MIT",
+  "author": {
+    "name": "Piotr Cichoń"
+  }
+}
