@@ -5,6 +5,8 @@ A Claude Code mod that draws progress bars above the prompt for long-running wor
 ```
 model.gguf ██████████████░░░░░░░░░░░░░░░░ 47% 10.8 GB / 22.9 GB · 85 MB/s · 2 min left
 test suite ██████████░░░░░░░░░░░░░░░░░░░░ 3 / 9 step · 12 min left
+● Research coding models · running · 4 min 12 s · 23 tool calls
+✓ Write final report · done · 6 min 40 s · 41 tool calls
 ```
 
 ## Install
@@ -55,6 +57,10 @@ Bar text is English by default. Switch it at any time with:
 The choice is remembered across sessions. The `language` option in the plugin's settings sets the starting value.
 
 Rate and time left are averaged from the first reading the mod saw. Git Bash paths such as `/c/models/x` are translated to `C:/models/x`.
+
+## Subagents and teammates
+
+Below the bars, every subagent or teammate the session runs gets a row: its description, state (running, waiting, done, failed), time since the mod first saw it and the number of tool calls it has made. Agents report no percentage, so the call count is the progress signal. A finished agent stays for 10 seconds with ✓ or ✗, then disappears. Agents that were already finished when the mod loaded are not shown.
 
 ## Reporting progress from a script
 
