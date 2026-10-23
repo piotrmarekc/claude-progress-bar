@@ -17,7 +17,8 @@ const winPath = (p: string) => p.replace(/^\/([a-zA-Z])\//, '$1:/')
 const TEXT = { en: { left: 'left', dot: '.' }, pl: { left: 'zostało', dot: ',' } }
 
 export const register: Register = (on, options) => {
-  const L = options.language === 'pl' ? TEXT.pl : TEXT.en
+  // Language: /progress-bar en|pl (kept in $.store across sessions) wins over the userConfig option.
+  let L = options.language === 'pl' ? TEXT.pl : TEXT.en
   const num = (n: number, digits: number) => n.toFixed(digits).replace('.', L.dot)
   const fmtBytes = (b: number) => (b >= 1e9 ? `${num(b / 1e9, 1)} GB` : `${num(b / 1e6, 0)} MB`)
   const fmtEta = (s: number) =>
@@ -25,7 +26,22 @@ export const register: Register = (on, options) => {
   // ponytail: rate = average since the first reading (session start or task start); ETA reacts slowly to a changing link
   const first = new Map<string, { t: number; done: number }>()
 
+  on('command.run', { command: 'progress-bar' }, async ($, e) => {
+    const lang = e.args.trim().toLowerCase()
+    if (lang !== 'en' && lang !== 'pl') return { text: 'Usage: /progress-bar en|pl' }
+    await $.store.set('language', lang)
+    L = TEXT[lang]
+    return { text: lang === 'pl' ? 'Pasek postępu: język polski.' : 'Progress bar: English.' }
+  })
+
   on('session.start', async ($, e, next) => {
+    await $.command.register({
+      name: 'progress-bar',
+      description: 'Progress bar language: en or pl',
+      argumentHint: 'en|pl',
+    })
+    const stored = await $.store.get('language')
+    if (stored === 'en' || stored === 'pl') L = TEXT[stored]
     const home = ((await $.env.get('USERPROFILE')) ?? (await $.env.get('HOME')) ?? '').replace(/\\/g, '/')
     const dir = `${home}/.claude/progress`
 
