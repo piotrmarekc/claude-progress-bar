@@ -7,7 +7,9 @@ import type { AgentRow, Item } from '../types'
 //   { "label": "download", "total": 22863084160, "files": ["C:/.../part0", ...] }  progress = sum of file sizes (bytes)
 //   { "label": "test suite", "total": 8, "done": 3, "unit": "step" }               progress = counter the script writes
 // A bar disappears when done >= total, when none of the files exists (yet or any more), or when the JSON is gone.
-type Tracker = { label?: string; total?: number; done?: number; unit?: string; files?: string[] }
+// Optional "pid": the writer's OS process id (on Windows the Windows PID); the bar hides once that process is gone,
+// so a killed script does not leave a stale bar behind.
+type Tracker = { label?: string; total?: number; done?: number; unit?: string; files?: string[]; pid?: number }
 
 const items = atom({ plugin: 'progress-bar', key: 'items' } as const, [])
 const agents = atom({ plugin: 'progress-bar', key: 'agents' } as const, [])
@@ -59,8 +61,15 @@ export const register: Register = (on, options) => {
     })
     const stored = await $.store.get('language')
     if (stored === 'en' || stored === 'pl') L = TEXT[stored]
+    const isWindows = (await $.env.get('USERPROFILE')) !== undefined
     const home = ((await $.env.get('USERPROFILE')) ?? (await $.env.get('HOME')) ?? '').replace(/\\/g, '/')
     const dir = `${home}/.claude/progress`
+    // A check that cannot run counts as alive: better a stale bar than a hidden live one.
+    const isAlive = (pid: number) =>
+      (isWindows
+        ? $.process.run(['tasklist', '/FI', `PID eq ${pid}`, '/NH', '/FO', 'CSV'], { timeoutMs: 5000 }).then(r => r.stdout.includes(`"${pid}"`))
+        : $.process.run(['ps', '-p', String(pid)], { timeoutMs: 5000 }).then(r => r.exitCode === 0)
+      ).catch(() => true)
 
     const tick = async () => {
       const entries = await $.fs.list(dir).catch(() => [])
@@ -71,6 +80,7 @@ export const register: Register = (on, options) => {
         const id = entry.name.slice(0, -5)
         const t = await $.fs.read(`${dir}/${entry.name}`).then(s => JSON.parse(s) as Tracker).catch(() => null)
         if (!t || !(t.total! > 0)) continue
+        if (typeof t.pid === 'number' && !(await isAlive(t.pid))) continue
         let done = t.done ?? 0
         let unit = t.unit ?? ''
         if (t.files?.length) {

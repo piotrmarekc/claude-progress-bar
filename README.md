@@ -45,6 +45,8 @@ Every 2 seconds the mod reads `~/.claude/progress/*.json`. Each file is one bar,
 
 A bar disappears when `done` reaches `total`, when none of the listed files exists, or when the JSON file is deleted. Delete the file when the task ends.
 
+Add `"pid"` (the writer's process id; on Windows the Windows PID) and the bar also disappears once that process is gone, so a killed script does not leave a stale bar. The mod checks it with `tasklist` on Windows and `ps -p` elsewhere; if the check itself fails, the bar stays.
+
 ## Language
 
 Bar text is English by default. Switch it at any time with:
@@ -67,7 +69,8 @@ Below the bars, every subagent or teammate the session runs gets a row: its desc
 ```bash
 PF=$HOME/.claude/progress/my-task.json; mkdir -p "$(dirname "$PF")"
 trap 'rm -f "$PF"' EXIT
-step() { echo "{\"label\": \"my task: $2\", \"done\": $1, \"total\": 5, \"unit\": \"step\"}" > "$PF"; }
+PID=$(cat /proc/$$/winpid 2>/dev/null || echo $$)   # Git Bash on Windows: the Windows PID
+step() { echo "{\"label\": \"my task: $2\", \"done\": $1, \"total\": 5, \"unit\": \"step\", \"pid\": $PID}" > "$PF"; }
 step 0 "start"
 # ... work ...
 step 1 "build"
