@@ -43,6 +43,8 @@ Every 2 seconds the mod reads `~/.claude/progress/*.json`. Each file is one bar,
 
 A bar disappears when `done` reaches `total`, when none of the listed files exists, or when the JSON file is deleted. Delete the file when the task ends.
 
+Bar text is English by default; set the `language` option to `pl` for Polish (`/plugin` → progress-bar → configure, or `pluginConfigs["progress-bar"].options.language` in `~/.claude/settings.json`).
+
 Rate and time left are averaged from the first reading the mod saw. Git Bash paths such as `/c/models/x` are translated to `C:/models/x`.
 
 ## Reporting progress from a script

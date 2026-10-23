@@ -14,11 +14,14 @@ const items = atom({ plugin: 'progress-bar', key: 'items' } as const, [])
 const BAR = 30
 // Git Bash scripts write /c/models/...; Windows does not resolve that.
 const winPath = (p: string) => p.replace(/^\/([a-zA-Z])\//, '$1:/')
-const fmtBytes = (b: number) => (b >= 1e9 ? `${(b / 1e9).toFixed(1)} GB` : `${(b / 1e6).toFixed(0)} MB`)
-const fmtEta = (s: number) =>
-  s < 90 ? `${Math.round(s)} s` : s < 5400 ? `${Math.round(s / 60)} min` : `${(s / 3600).toFixed(1)} h`
+const TEXT = { en: { left: 'left', dot: '.' }, pl: { left: 'zostało', dot: ',' } }
 
-export const register: Register = on => {
+export const register: Register = (on, options) => {
+  const L = options.language === 'pl' ? TEXT.pl : TEXT.en
+  const num = (n: number, digits: number) => n.toFixed(digits).replace('.', L.dot)
+  const fmtBytes = (b: number) => (b >= 1e9 ? `${num(b / 1e9, 1)} GB` : `${num(b / 1e6, 0)} MB`)
+  const fmtEta = (s: number) =>
+    s < 90 ? `${Math.round(s)} s` : s < 5400 ? `${Math.round(s / 60)} min` : `${num(s / 3600, 1)} h`
   // ponytail: rate = average since the first reading (session start or task start); ETA reacts slowly to a changing link
   const first = new Map<string, { t: number; done: number }>()
 
@@ -75,7 +78,7 @@ export const register: Register = on => {
             ? `${fmtBytes(i.done)} / ${fmtBytes(i.total)}`
             : `${i.done} / ${i.total}${i.unit ? ` ${i.unit}` : ''}`
           const speed = isBytes && i.rate > 0 ? ` · ${fmtBytes(i.rate)}/s` : ''
-          const eta = i.rate > 0 ? ` · ${fmtEta((i.total - i.done) / i.rate)} left` : ''
+          const eta = i.rate > 0 ? ` · ${L.left} ${fmtEta((i.total - i.done) / i.rate)}` : ''
           return (
             <Box key={i.id} columnGap={1}>
               <Text bold>{i.label}</Text>

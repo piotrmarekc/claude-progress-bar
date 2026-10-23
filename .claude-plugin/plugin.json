@@ -6,5 +6,17 @@
   "license": "MIT",
   "author": {
     "name": "Piotr Cichoń"
+  },
+  "userConfig": {
+    "language": {
+      "title": "Language",
+      "description": "Language of the bar text (time left, decimal separator)",
+      "type": "string",
+      "options": [
+        "en",
+        "pl"
+      ],
+      "default": "en"
+    }
   }
 }
